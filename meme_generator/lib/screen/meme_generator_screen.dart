@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:meme_generator/domain/models/image_model.dart';
 import 'package:meme_generator/screen/buttons.dart';
@@ -13,7 +15,7 @@ class MemeGeneratorScreen extends StatefulWidget {
 class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
   final _textController = TextEditingController();
   final placeholder =
-      'https://i.cbc.ca/1.6713656.1679693029!/fileImage/httpImage/image.jpg_gen/derivatives/16x9_780/this-is-fine.jpg';
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Placeholder_view_vector.svg/681px-Placeholder_view_vector.svg.png';
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +52,8 @@ class _MemeGeneratorScreenState extends State<MemeGeneratorScreen> {
                             builder: (context, imageProvider, child) {
                               return imageProvider.image != null
                                   ? Image.file(imageProvider.image!)
-                                  : Image.network(placeholder);
+                                  : Image.network(placeholder,
+                                      fit: BoxFit.cover);
                             },
                           ),
                         ),

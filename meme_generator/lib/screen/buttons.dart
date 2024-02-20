@@ -1,11 +1,8 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:meme_generator/domain/models/image_model.dart';
 import 'package:provider/provider.dart';
-
-typedef ImageSelectCallback = void Function(File imageFile);
 
 class Buttons extends StatefulWidget {
   const Buttons({Key? key}) : super(key: key);
@@ -18,6 +15,7 @@ class _ButtonsState extends State<Buttons> {
   final placeholder =
       'https://i.cbc.ca/1.6713656.1679693029!/fileImage/httpImage/image.jpg_gen/derivatives/16x9_780/this-is-fine.jpg';
 
+  final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -81,9 +79,12 @@ class _ButtonsState extends State<Buttons> {
                   TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
             ),
           ),
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 2,
-            child: Text(
+            onTap: () {
+              _pickImageFromUrl();
+            },
+            child: const Text(
               "Вставить из URL",
               style:
                   TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
@@ -107,11 +108,103 @@ class _ButtonsState extends State<Buttons> {
                 backgroundColor: MaterialStateProperty.all(Colors.deepPurple),
               ),
               child: const Icon(
-                Icons.image_search_rounded,
+                Icons.photo_camera,
                 color: Colors.white,
               ),
             ),
           ),
         ),
       );
+  void _pickImageFromUrl() {
+    showModalBottomSheet(
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.0))),
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+            right: 10,
+            left: 10,
+            bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.width * 0.55,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(10),
+                  child:
+                      Text("Вставьте URL адрес изображения и мы сотворим мем"),
+                ),
+                Stack(children: [
+                  Container(
+                      height: 55,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8),
+                      )),
+                  TextFormField(
+                    validator: (String? value) {
+                      if (value!.isEmpty) {
+                        return "Пустое поле";
+                      }
+                      return null;
+                    },
+                    obscureText: false,
+                    //controller:
+                    autocorrect: false,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.link, color: Colors.black),
+                      border: InputBorder.none,
+                      counterText: "",
+                      floatingLabelAlignment: FloatingLabelAlignment.start,
+                      labelText: "Вставьте ссылку",
+                      labelStyle: TextStyle(color: Colors.grey),
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                      hintStyle: TextStyle(
+                        color: Color.fromARGB(255, 164, 167, 169),
+                      ),
+                    ),
+                  ),
+                ]),
+                SizedBox(
+                  height: 50,
+                  width: double.infinity,
+                  child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ElevatedButton(
+                        style: ButtonStyle(
+                            elevation: MaterialStateProperty.all(0),
+                            alignment: Alignment.center,
+                            backgroundColor:
+                                MaterialStateProperty.all(Colors.deepPurple),
+                            shape: MaterialStateProperty.all(
+                              RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                            )),
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: const Text(
+                          "Отправить",
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
+                      )),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
