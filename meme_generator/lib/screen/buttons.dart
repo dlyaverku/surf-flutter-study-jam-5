@@ -1,21 +1,27 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:meme_generator/domain/models/image_model.dart';
+import 'package:meme_generator/screen/card_container.dart';
+import 'package:meme_generator/screen/utils.dart';
 import 'package:provider/provider.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+
+import 'image_url.dart';
 
 class Buttons extends StatefulWidget {
-  const Buttons({Key? key}) : super(key: key);
-
+  const Buttons({Key? key, required this.memeName}) : super(key: key);
+  final String memeName;
   @override
   State<Buttons> createState() => _ButtonsState();
 }
 
 class _ButtonsState extends State<Buttons> {
-  final placeholder =
-      'https://i.cbc.ca/1.6713656.1679693029!/fileImage/httpImage/image.jpg_gen/derivatives/16x9_780/this-is-fine.jpg';
-
   final _formKey = GlobalKey<FormState>();
+  Uint8List? bytes;
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -26,31 +32,41 @@ class _ButtonsState extends State<Buttons> {
           _childPopup(),
           SizedBox(
             height: 40,
+            width: responsiveSize * 0.4,
             child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ButtonStyle(
-                  elevation: MaterialStateProperty.all(0),
-                  shape: MaterialStateProperty.all(
-                    RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.deepPurple),
+                child: ElevatedButton(
+                  onPressed: (() async {
+                    final controller = ScreenshotController();
+                    final bytes = await controller.captureFromWidget(
+                        CardContainer(
+                            placeholder: placeholder,
+                            memeName: widget.memeName));
+                    setState(() {
+                      this.bytes = bytes;
+                    });
+                    shareImage();
+                  }),
+                  style: ButtonStyle(
+                    elevation: MaterialStateProperty.all(0),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    backgroundColor:
+                        MaterialStateProperty.all(Colors.deepPurple),
                   ),
-                  backgroundColor: MaterialStateProperty.all(Colors.deepPurple),
-                ),
-                child: const Text(
-                  "Сгенерировать запрос",
-                  style: TextStyle(
-                    fontFamily: 'Impact',
-                    fontSize: 20,
-                    color: Colors.white,
+                  child: const Align(
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.ios_share_rounded,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ),
-            ),
-          ),
+                )),
+          )
         ],
       ),
     );
@@ -64,6 +80,13 @@ class _ButtonsState extends State<Buttons> {
     if (pickedFile != null) {
       imageProvider.setImage(File(pickedFile.path));
     }
+  }
+
+  shareImage() async {
+    final temp = await getTemporaryDirectory();
+    final path = '${temp.path}/image.png';
+    File(path).writeAsBytesSync(bytes!);
+    await Share.shareXFiles([XFile(path)]);
   }
 
   Widget _childPopup() => PopupMenuButton<int>(
@@ -93,6 +116,7 @@ class _ButtonsState extends State<Buttons> {
         ],
         child: SizedBox(
           height: 40,
+          width: responsiveSize * 0.4,
           child: DecoratedBox(
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
@@ -121,90 +145,7 @@ class _ButtonsState extends State<Buttons> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(20.0))),
       context: context,
       isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-            right: 10,
-            left: 10,
-            bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: SizedBox(
-          height: MediaQuery.of(context).size.width * 0.55,
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(10),
-                  child:
-                      Text("Вставьте URL адрес изображения и мы сотворим мем"),
-                ),
-                Stack(children: [
-                  Container(
-                      height: 55,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(8),
-                      )),
-                  TextFormField(
-                    validator: (String? value) {
-                      if (value!.isEmpty) {
-                        return "Пустое поле";
-                      }
-                      return null;
-                    },
-                    obscureText: false,
-                    //controller:
-                    autocorrect: false,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.link, color: Colors.black),
-                      border: InputBorder.none,
-                      counterText: "",
-                      floatingLabelAlignment: FloatingLabelAlignment.start,
-                      labelText: "Вставьте ссылку",
-                      labelStyle: TextStyle(color: Colors.grey),
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                      hintStyle: TextStyle(
-                        color: Color.fromARGB(255, 164, 167, 169),
-                      ),
-                    ),
-                  ),
-                ]),
-                SizedBox(
-                  height: 50,
-                  width: double.infinity,
-                  child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ElevatedButton(
-                        style: ButtonStyle(
-                            elevation: MaterialStateProperty.all(0),
-                            alignment: Alignment.center,
-                            backgroundColor:
-                                MaterialStateProperty.all(Colors.deepPurple),
-                            shape: MaterialStateProperty.all(
-                              RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
-                            )),
-                        onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        child: const Text(
-                          "Отправить",
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      )),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      builder: (context) => PickImageFromUrl(formKey: _formKey),
     );
   }
 }
